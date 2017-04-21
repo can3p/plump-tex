@@ -12,69 +12,66 @@
 (def-suite tests)
 (in-suite tests)
 
-(defun parse-equal (parse &rest possibilities)
-  (let ((result (with-output-to-string (stream)
-                  (plump:serialize (plump-tex:parse parse) stream))))
-    (loop for possibility in possibilities
-          thereis (string= result possibility))))
+(defun parse (str)
+  (with-output-to-string (stream)
+    (plump:serialize (plump-tex:parse str) stream)))
 
 (test text
-  (is (parse-equal "foo"
-                   "foo"))
+  (is (string= "foo"
+               (parse "foo")))
 
-  (is (parse-equal "\\\\"
-                   "\\"))
+  (is (string= "\\"
+               (parse "\\\\")))
 
-  (is (parse-equal "\\}\\{\\&\\%\\$\\#\\_\\~\\^\\"
-                   "}{&amp;%$#_~^\\")))
+  (is (string= "}{&amp;%$#_~^\\"
+               (parse "\\}\\{\\&\\%\\$\\#\\_\\~\\^\\"))))
 
 (test tag
-  (is (parse-equal "\\foo"
-                   "<foo/>"))
+  (is (string= "<foo/>"
+               (parse "\\foo")))
   
-  (is (parse-equal "\\foo[bar]"
-                   "<foo bar=\"\"/>"))
+  (is (string= "<foo bar=\"\"/>"
+               (parse "\\foo[bar]")))
   
-  (is (parse-equal "\\foo[bar=baz]"
-                   "<foo bar=\"baz\"/>"))
+  (is (string= "<foo bar=\"baz\"/>"
+               (parse "\\foo[bar=baz]")))
 
-  (is (parse-equal "\\foo[bar,baz]"
-                   "<foo bar=\"\" baz=\"\"/>"
-                   "<foo baz=\"\" bar=\"\"/>")))
+  (is (string= "<foo bar=\"\" baz=\"\"/>"
+               (parse "\\foo[bar,baz]"))))
 
 (test block
-  (is (parse-equal "{}"
-                   "<div/>"))
+  (is (string= "<div/>"
+               (parse "{}")))
   
-  (is (parse-equal "{1}"
-                   "<div>1</div>"))
+  (is (string= "<div>1</div>"
+               (parse "{1}")))
   
-  (is (parse-equal "{{}}"
-                   "<div><div/></div>")))
+  (is (string= "<div><div/></div>"
+               (parse "{{}}"))))
 
 
 (test tagblock
-  (is (parse-equal "\\foo{bar baz}"
-                   "<foo>bar baz</foo>"))
+  (is (string= "<foo>bar baz</foo>"
+               (parse "\\foo{bar baz}")))
 
-  (is (parse-equal "\\foo{\\bar{baz}}"
-                   "<foo><bar>baz</bar></foo>"))
+  (is (string= "<foo><bar>baz</bar></foo>"
+               (parse "\\foo{\\bar{baz}}")))
 
-  (is (parse-equal "\\foo{bar}\\baz{}"
-                   "<foo>bar</foo><baz/>")))
+  (is (string= "<foo>bar</foo><baz/>"
+               (parse "\\foo{bar}\\baz{}"))))
 
 (test sanity
-  (is (parse-equal "\\foo{bar"
-                   "<foo>bar</foo>"))
+  (is (string= "<foo>bar</foo>"
+               (parse "\\foo{bar")))
 
-  (is (parse-equal "{{}"
-                   "<div><div/></div>"))
+  (is (string= "<div><div/></div>"
+               (parse "{{}")))
 
-  (is (parse-equal "\\foo[bar"
-                   "<foo bar=\"\"/>"))
+  (is (string= "<foo bar=\"\"/>"
+               (parse "\\foo[bar")))
 
-  (is (parse-equal "\\foo[bar="
-                   "<foo bar=\"\"/>")))
+  (is (string= "<foo bar=\"\"/>"
+               (parse "\\foo[bar="))))
 
 (defmethod asdf:perform ((op asdf:test-op) (system (eql (asdf:find-system :plump-tex-test))))
   (run! 'tests))
