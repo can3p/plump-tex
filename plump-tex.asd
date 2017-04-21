@@ -19,5 +19,6 @@
   :serial T
   :components ((:file "plump-tex"))
   :depends-on (:plump
+               :fiveam
                :cl-ppcre)
   :in-order-to ((test-op (test-op :plump-tex-test))))
