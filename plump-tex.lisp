@@ -16,7 +16,6 @@
 (in-package #:plump-tex)
 ;; This is pretty much a copy of plump/parser.lisp with changes so that it matches common TeX markup.
 
-(defvar *tex-tag-dispatchers* ())
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *whitespace* '(#\Space #\Newline #\Tab #\Return #\Linefeed #\Page)))
 
@@ -122,10 +121,7 @@
   (when (funcall (make-matcher :tex-tag-start))
     (consume) ; Consume backslash
     (let ((name (read-tex-name)))
-      (or (loop for (d test func) in *tex-tag-dispatchers*
-                when (funcall (the function test) name)
-                do (return (funcall (the function func) name))
-                finally (return (read-tex-standard-tag name)))
+      (or (read-tex-standard-tag name)
           (progn
             (unread-n (length name))
             (let ((text (read-tex-text)))
