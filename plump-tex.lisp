@@ -25,6 +25,15 @@
                                              (in #\A #\Z)
                                              (is #\@)))))
 
+(define-matcher tex-plain-text (or (in #\a #\z)
+                                   (in #\A #\Z)
+                                   (in #\0 #\9)
+                                   (find *whitespace*)
+                                   ))
+
+(define-matcher tex-inline-tag-end (and (is #\\)
+                                        (next (is #\/))))
+
 (define-matcher tex-block-start (and (is #\{)
                                      (not (prev (is #\\)))))
 
@@ -50,6 +59,14 @@
     (consume-until (make-matcher (or :tex-block-start
                                      :tex-block-end
                                      :tex-tag-start))))))
+
+(defun read-inline-tex-text ()
+  (let ((text (consume-until (make-matcher (not :tex-plain-text)))))
+    (if (funcall (make-matcher :tex-inline-tag-end))
+        (progn
+          (advance-n 2)
+          text)
+        (unread-n (length text)))))
 
 (defun read-tex-attribute-name ()
   (replace-escaped
@@ -108,14 +125,19 @@
          (attrs (if (and closing (char= closing #\[))
                     (prog2 (advance) (read-tex-attributes)
                       (setf closing (peek)))
-                    (make-attribute-map))))
-    (case closing
-      (#\{
-       (advance)
-       (let ((*root* (make-element *root* name :attributes attrs)))
-         (read-tex-children)
-         *root*))
-      (T (make-element *root* name :attributes attrs)))))
+                    (make-attribute-map)))
+         (inline-text (when closing (read-inline-tex-text))))
+    (if (and closing (char= closing #\Space) inline-text)
+        (let ((*root* (make-element *root* name :attributes attrs)))
+          (make-text-node *root* (replace-escaped inline-text))
+          *root*)
+        (case closing
+          (#\{
+           (advance)
+           (let ((*root* (make-element *root* name :attributes attrs)))
+             (read-tex-children)
+             *root*))
+          (T (make-element *root* name :attributes attrs))))))
 
 (defun read-tex-tag ()
   (when (funcall (make-matcher :tex-tag-start))

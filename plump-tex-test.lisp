@@ -54,6 +54,9 @@
   (is (string= "<foo>bar baz</foo>"
                (parse "\\foo{bar baz}")))
 
+  (is (string= "<foo> bar baz </foo>"
+               (parse "\\foo bar baz \\/")))
+
   (is (string= "<foo><bar>baz</bar></foo>"
                (parse "\\foo{\\bar{baz}}")))
 
