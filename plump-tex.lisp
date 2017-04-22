@@ -66,7 +66,9 @@
         (progn
           (advance-n 2)
           text)
-        (unread-n (length text)))))
+        (progn
+          (unread-n (length text))
+          nil))))
 
 (defun read-tex-attribute-name ()
   (replace-escaped
